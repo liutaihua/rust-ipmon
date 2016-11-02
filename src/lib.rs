@@ -141,16 +141,3 @@ pub mod ipmon {
         }
     }
 }
-
-
-    //    fn main()
-    //    {
-    //        let mut file = File::open("ip.dat").unwrap();
-    //        let mut buffer = Vec::new();
-    //        file.read_to_end(&mut buffer).unwrap();
-    //        let mut locator = Locator::new(&buffer).unwrap();
-    //        let info = locator.Find("202.96.209.5".to_string());
-    //        match locator.Find("202.96.209.5".to_string()) {
-    //            Ok(loc) => println!("location-> country: {}, region: {}, city: {}, isp: {}", loc.Country, loc.Region, loc.City, loc.Isp),
-    //            Err(e) => println!("error: {:?}", e)
-    //        }
