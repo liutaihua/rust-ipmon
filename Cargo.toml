@@ -1,0 +1,7 @@
+[package]
+name = "ipmon"
+version = "0.1.0"
+authors = ["liutaihua <defage@gmail.com>"]
+
+[dependencies]
+byteorder = "0.5"
