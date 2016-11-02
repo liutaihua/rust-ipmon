@@ -38,6 +38,8 @@ struct LocationInfo{
     Isp:     String
 }
 
+pub Tra
+
 
 //#[allow(exceeding_bitshifts)]
 #[allow(non_snake_case)]
