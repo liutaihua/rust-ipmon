@@ -19,7 +19,7 @@ pub enum LocatorError {
 #[allow(dead_code)]
 #[allow(non_snake_case)]
 #[derive(Debug)]
-struct Locator {
+pub struct Locator {
     textData:  Vec<u8>,
     indexData1: Vec<u32>,
     indexData2: Vec<i32>,
@@ -31,31 +31,36 @@ struct Locator {
 #[allow(dead_code)]
 #[allow(non_snake_case)]
 #[derive(Debug)]
-struct LocationInfo{
+pub struct LocationInfo{
     Country: String,
     Region:  String,
     City:    String,
     Isp:     String
 }
 
-pub Tra
-
 
 //#[allow(exceeding_bitshifts)]
 #[allow(non_snake_case)]
 impl Locator {
-    pub fn new(data: &Vec<u8>) -> Result<Locator, LocatorError>{
-        let mut rdr = Cursor::new(&data[0..4]);
+    pub fn init(file: &str) -> Result<Locator, LocatorError>{
+        let mut file = File::open(file).unwrap();
+        let mut buffer = Vec::new();
+        file.read_to_end(&mut buffer).unwrap();
+        Locator::new(&buffer)
+    }
+
+    pub fn new(buf: &Vec<u8>) -> Result<Locator, LocatorError>{
+        let mut rdr = Cursor::new(&buf[0..4]);
         let textoff = rdr.read_u32::<BigEndian>().unwrap();
 
         let mut textData = Vec::new();
-        for i in &data[(textoff-1024)as usize..data.len() as usize] {
+        for i in &buf[(textoff-1024)as usize..buf.len() as usize] {
             textData.push(*i);
         }
         let mut index = vec![0;256];
         for i in 0..256 {
             let off = 4 + i*4;
-            let mut r = Cursor::new(&data[off..off+4]);
+            let mut r = Cursor::new(&buf[off..off+4]);
             index[i] = r.read_u32::<LittleEndian>().unwrap() as i32;
         }
 
@@ -65,10 +70,10 @@ impl Locator {
         let mut indexData3 = vec![0;nidx];
         for i in 0..nidx {
             let off:i32 = (4 + 1024 + i*8) as i32;
-            let mut r = Cursor::new(&data[off as usize..(off+5) as usize]);
+            let mut r = Cursor::new(&buf[off as usize..(off+5) as usize]);
             indexData1[i as usize] = r.read_u32::<BigEndian>().unwrap() as u32;
-            indexData2[i as usize] = data[(off+4) as usize] as i32 | (data[(off+5) as usize] as i32) <<8 | (data[(off+6) as usize] as i32) <<16;
-            indexData3[i as usize] = (data[(off+7) as usize]) as i32;
+            indexData2[i as usize] = buf[(off+4) as usize] as i32 | (buf[(off+5) as usize] as i32) <<8 | (buf[(off+6) as usize] as i32) <<16;
+            indexData3[i as usize] = (buf[(off+7) as usize]) as i32;
         }
         Ok(Locator{
             textData: textData,
@@ -79,16 +84,16 @@ impl Locator {
         })
     }
 
-    fn Find(&self, ip: String) -> Result<LocationInfo, LocatorError> {
+    pub fn Find(&self, ip: &str) -> Result<LocationInfo, LocatorError> {
         let ip: Ipv4Addr = Ipv4Addr::from_str(&ip).unwrap();
         let ipu = ip.octets();
         let mut r = Cursor::new(&ipu);
         let uip = r.read_u32::<BigEndian>().unwrap() as u32;
-        self.FindByUint(uip)
+        self.findByUint(uip)
     }
 
 
-    fn FindByUint(&self, ip: u32)-> Result<LocationInfo, LocatorError> {
+    fn findByUint(&self, ip: u32)-> Result<LocationInfo, LocatorError> {
         let mut end = self.indexData1.len() - 1;
         if ip>>24 != 0xff {
             end = (self.index[((ip>>24)+1) as usize]) as usize;
@@ -139,7 +144,7 @@ impl Locator {
 #[should_panic]
 fn test_init() {
     assert!(false);
-    let loc = Locator::init("./ip.dat".to_string());
-    let info = loc.Find("202.96.209.5".to_string());
+    let loc = Locator::init("./ip.dat");
+    let info = loc.Find("202.96.209.5");
     println!("{:?}", info);
 }
